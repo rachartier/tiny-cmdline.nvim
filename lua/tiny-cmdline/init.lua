@@ -112,6 +112,7 @@ local function reposition()
       width = cfg.width,
       border = cfg.border,
     }
+    vim.wo[win].winhighlight = "Normal:TinyCmdlineNormal,FloatBorder:TinyCmdlineBorder"
   end
 
   local content_height = math.max(1, vim.api.nvim_win_get_height(win))
@@ -186,6 +187,9 @@ function M.setup(opts)
     vim.notify("tiny-cmdline.nvim requires Neovim >= 0.12", vim.log.levels.WARN)
     return
   end
+
+  vim.api.nvim_set_hl(0, "TinyCmdlineNormal", { link = "NormalFloat", default = true })
+  vim.api.nvim_set_hl(0, "TinyCmdlineBorder", { link = "FloatBorder", default = true })
 
   original_ui_cmdline_pos = vim.g.ui_cmdline_pos
   cmd_win_saved = nil

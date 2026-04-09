@@ -12,6 +12,7 @@ A Neovim plugin that repositions the cmdline as a centered floating window, powe
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Configuration](#configuration)
+- [Highlight Groups](#highlight-groups)
 - [How It Works](#how-it-works)
 - [Integrations](#integrations)
   - [blink.cmp](#blinkcmp)
@@ -144,6 +145,20 @@ require("tiny-cmdline").setup({
 ```
 
 </details>
+
+## Highlight Groups
+
+| Group | Default link | Description |
+| --- | --- | --- |
+| `TinyCmdlineNormal` | `NormalFloat` | Background of the cmdline window |
+| `TinyCmdlineBorder` | `FloatBorder` | Border of the cmdline window |
+
+Override them in your colorscheme or config:
+
+```lua
+vim.api.nvim_set_hl(0, "TinyCmdlineBorder", { fg = "#your_color" })
+vim.api.nvim_set_hl(0, "TinyCmdlineNormal", { bg = "#your_color" })
+```
 
 ## How It Works
 
