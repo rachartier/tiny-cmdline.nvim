@@ -17,8 +17,8 @@ M.adapters = {
 ---@field max integer Maximum width in columns
 
 ---@class TinyCmdlinePositionConfig
----@field x number Horizontal position as a fraction (0 = left, 0.5 = center, 1 = right)
----@field y number Vertical position as a fraction (0 = top, 0.5 = center, 1 = bottom)
+---@field x number Horizontal position: fraction (0–1 exclusive) = relative to available space, whole number = absolute columns
+---@field y number Vertical position: fraction (0–1 exclusive) = relative to available space, whole number = absolute rows
 
 ---@class TinyCmdlineConfig
 ---@field width TinyCmdlineWidthConfig
@@ -54,8 +54,16 @@ local function geometry(content_height)
   )
   width = math.min(width, cols - 4)
 
-  local row = math.max(0, math.floor((lines - content_height - b * 2) * M.config.position.y))
-  local col = math.max(0, math.floor((cols - width - b * 2) * M.config.position.x))
+  -- fractional (0–1 exclusive of whole numbers) = relative to available space; whole number = absolute
+  local function resolve(value, available)
+    if value ~= math.floor(value) then
+      return math.floor(available * value)
+    end
+    return math.floor(value)
+  end
+
+  local row = math.max(0, resolve(M.config.position.y, lines - content_height - b * 2))
+  local col = math.max(0, resolve(M.config.position.x, cols - width - b * 2))
   return width, row, col, b
 end
 

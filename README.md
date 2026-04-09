@@ -62,7 +62,9 @@ require("tiny-cmdline").setup({
         max = 80,        -- maximum width in columns
     },
 
-    -- Window position as fractions (0 = left/top, 0.5 = center, 1 = right/bottom)
+    -- Window position
+    -- Fractional (e.g. 0.5): relative to available space (0 = left/top, 0.5 = center, 1 = right/bottom)
+    -- Whole number (e.g. 10): absolute offset in columns/rows from the top-left
     position = {
         x = 0.5,
         y = 0.5,
