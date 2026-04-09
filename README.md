@@ -27,7 +27,7 @@ A Neovim plugin that repositions the cmdline as a centered floating window, powe
 - `cmdheight=0` (better to have for `ui2`)
 - `ui2` must be enabled explicitly:
   ```lua
-  require("vim._core.ui2").enable({ enable = true })
+  require("vim._core.ui2").enable({})
   ```
 
 ## Installation
@@ -36,9 +36,9 @@ The plugin is setup-less: it auto-initializes on `UIEnter` with sensible default
 
 There are three ways to configure it:
 
-- **Minimal** — just install and set `cmdheight=0`
-- **`vim.g`** — set `vim.g.tiny_cmdline` before the plugin loads (no `setup()` needed)
-- **`setup()`** — explicit call, takes priority over `vim.g`
+- **Minimal**: just install and set `cmdheight=0`
+- **`vim.g`**: set `vim.g.tiny_cmdline` before the plugin loads (no `setup()` needed)
+- **`setup()`**: explicit call, takes priority over `vim.g`
 
 ### vim.pack (Neovim built-in, >= 0.12)
 
