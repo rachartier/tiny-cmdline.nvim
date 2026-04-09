@@ -4,6 +4,9 @@
 
 A Neovim plugin that repositions the cmdline as a centered floating window, powered by Neovim's native `ui2` system.
 
+<img width="1085" height="625" alt="image" src="https://github.com/user-attachments/assets/a8dd229d-dff8-40b5-8727-58fb8fce7c64" />
+
+
 ## Table of Contents
 
 - [Requirements](#requirements)
