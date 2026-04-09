@@ -16,7 +16,7 @@ A Neovim plugin that repositions the cmdline as a centered floating window, powe
 - [Integrations](#integrations)
   - [blink.cmp](#blinkcmp)
   - [nvim-cmp](#nvim-cmp)
-  - [mini.completion](#minicompletion)
+  - [mini.cmdline](#minicmdline)
   - [Default (built-in) completion](#default-built-in-completion)
 - [Troubleshooting](#troubleshooting)
 
@@ -94,14 +94,14 @@ The window position is also updated on `VimResized` and `TabEnter` to stay corre
 
 ## Integrations
 
-tiny-cmdline is compatible with the most common completion plugins. The table below summarises what, if anything, is required for each.
+tiny-cmdline is compatible with the most common completion plugins. The table below summarises compatibility details for each.
 
-| Plugin | Menu repositions automatically | Extra config required |
-| --- | --- | --- |
-| **blink.cmp** | :heavy_check_mark: with adapter | :heavy_check_mark: see below |
-| **nvim-cmp** | :heavy_check_mark: | :x: |
-| **mini.completion** | :heavy_check_mark: | :x: |
-| **Default (built-in)** | :heavy_check_mark: | :x: |
+| Plugin | Menu repositions on open | Menu repositions on window resize | Extra config required |
+| --- | --- | --- | --- |
+| **blink.cmp** | :heavy_check_mark: with adapter | :heavy_check_mark: with adapter | :heavy_check_mark: see below |
+| **nvim-cmp** | :heavy_check_mark: | :x: (not yet supported) | :x: |
+| **mini.cmdline** | :heavy_check_mark: | :x: (not yet supported) | :x: |
+| **Default (built-in)** | :heavy_check_mark: | :x: (not yet supported) | :x: |
 
 ### blink.cmp
 
