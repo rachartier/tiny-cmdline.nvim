@@ -12,13 +12,13 @@ M.adapters = {
 }
 
 ---@class TinyCmdlineWidthConfig
----@field fraction number Fraction of editor columns (0–1)
+---@field value string|integer Width: "60%" = fraction of editor columns, integer = absolute columns
 ---@field min integer Minimum width in columns
 ---@field max integer Maximum width in columns
 
 ---@class TinyCmdlinePositionConfig
----@field x number Horizontal position: fraction (0–1 exclusive) = relative to available space, whole number = absolute columns
----@field y number Vertical position: fraction (0–1 exclusive) = relative to available space, whole number = absolute rows
+---@field x string|integer Horizontal position: "50%" = center, integer = absolute columns from left
+---@field y string|integer Vertical position: "50%" = center, integer = absolute rows from top
 
 ---@class TinyCmdlineConfig
 ---@field width TinyCmdlineWidthConfig
@@ -29,19 +29,27 @@ M.adapters = {
 ---@field on_reposition fun()|nil Called after every reposition
 M.config = {
   width = {
-    fraction = 0.6,
+    value = "60%",
     min = 40,
     max = 80,
   },
   position = {
-    x = 0.5,
-    y = 0.5,
+    x = "50%",
+    y = "50%",
   },
   border = nil,
   menu_col_offset = 3,
   native_types = { "/", "?" },
   on_reposition = nil,
 }
+
+-- "60%" -> fraction of available; integer -> absolute
+local function parse_dimension(value, available)
+  if type(value) == "string" then
+    return math.floor(available * tonumber(value:match("^(%d+)%%$")) / 100)
+  end
+  return math.floor(value)
+end
 
 ---@param content_height integer
 ---@return integer width, integer row, integer col, integer b
@@ -50,20 +58,12 @@ local function geometry(content_height)
   local b = M.config.border == "none" and 0 or 1
   local width = math.max(
     M.config.width.min,
-    math.min(M.config.width.max, math.floor(cols * M.config.width.fraction))
+    math.min(M.config.width.max, parse_dimension(M.config.width.value, cols))
   )
   width = math.min(width, cols - 4)
 
-  -- fractional (0–1 exclusive of whole numbers) = relative to available space; whole number = absolute
-  local function resolve(value, available)
-    if value ~= math.floor(value) then
-      return math.floor(available * value)
-    end
-    return math.floor(value)
-  end
-
-  local row = math.max(0, resolve(M.config.position.y, lines - content_height - b * 2))
-  local col = math.max(0, resolve(M.config.position.x, cols - width - b * 2))
+  local row = math.max(0, parse_dimension(M.config.position.y, lines - content_height - b * 2))
+  local col = math.max(0, parse_dimension(M.config.position.x, cols - width - b * 2))
   return width, row, col, b
 end
 

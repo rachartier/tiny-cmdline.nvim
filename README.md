@@ -57,17 +57,15 @@ require("tiny-cmdline").setup()
 require("tiny-cmdline").setup({
     -- Cmdline window width
     width = {
-        fraction = 0.6,  -- fraction of editor columns (0–1)
-        min = 40,        -- minimum width in columns
-        max = 80,        -- maximum width in columns
+        value = "60%",  -- "N%" = fraction of editor columns, integer = absolute columns
+        min = 40,       -- minimum width in columns
+        max = 80,       -- maximum width in columns
     },
 
-    -- Window position
-    -- Fractional (e.g. 0.5): relative to available space (0 = left/top, 0.5 = center, 1 = right/bottom)
-    -- Whole number (e.g. 10): absolute offset in columns/rows from the top-left
+    -- Window position ("N%" = fraction of available space, integer = absolute columns/rows)
     position = {
-        x = 0.5,
-        y = 0.5,
+        x = "50%",  -- horizontal: "0%" = left, "50%" = center, "100%" = right
+        y = "50%",  -- vertical:   "0%" = top,  "50%" = center, "100%" = bottom
     },
 
     -- Border style for the floating window
