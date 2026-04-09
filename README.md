@@ -154,7 +154,7 @@ require("tiny-cmdline").setup({
 
 | Group | Default link | Description |
 | --- | --- | --- |
-| `TinyCmdlineNormal` | `NormalFloat` | Background of the cmdline window |
+| `TinyCmdlineNormal` | `MsgArea` | Background of the cmdline window |
 | `TinyCmdlineBorder` | `FloatBorder` | Border of the cmdline window |
 
 Override them in your colorscheme or config:

@@ -188,7 +188,7 @@ function M.setup(opts)
     return
   end
 
-  vim.api.nvim_set_hl(0, "TinyCmdlineNormal", { link = "NormalFloat", default = true })
+  vim.api.nvim_set_hl(0, "TinyCmdlineNormal", { link = "MsgArea", default = true })
   vim.api.nvim_set_hl(0, "TinyCmdlineBorder", { link = "FloatBorder", default = true })
 
   original_ui_cmdline_pos = vim.g.ui_cmdline_pos
