@@ -1,5 +1,7 @@
 local M = {}
 
+M._initialized = false
+
 ---@class TinyCmdlineAdapters
 M.adapters = {
   ---@type fun(): nil
@@ -175,6 +177,11 @@ end
 
 ---@param opts TinyCmdlineConfig?
 function M.setup(opts)
+  if M._initialized then
+    return
+  end
+  M._initialized = true
+
   if vim.fn.has("nvim-0.12") == 0 then
     vim.notify("tiny-cmdline.nvim requires Neovim >= 0.12", vim.log.levels.WARN)
     return

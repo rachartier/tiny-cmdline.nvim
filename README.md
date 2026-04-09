@@ -27,25 +27,82 @@ A Neovim plugin that repositions the cmdline as a centered floating window, powe
 
 ## Installation
 
+The plugin is setup-less: it auto-initializes on `UIEnter` with sensible defaults. No `setup()` call is required.
+
+There are three ways to configure it:
+
+- **Minimal** — just install and set `cmdheight=0`
+- **`vim.g`** — set `vim.g.tiny_cmdline` before the plugin loads (no `setup()` needed)
+- **`setup()`** — explicit call, takes priority over `vim.g`
+
+### vim.pack (Neovim built-in, >= 0.12)
+
+Minimal:
+
+```lua
+vim.o.cmdheight = 0
+vim.pack.add({ "https://github.com/rachartier/tiny-cmdline.nvim" })
+```
+
+With `vim.g`:
+
+```lua
+vim.o.cmdheight = 0
+vim.g.tiny_cmdline = {
+    width = { value = "70%" },
+}
+vim.pack.add({ "https://github.com/rachartier/tiny-cmdline.nvim" })
+```
+
+With `setup()`:
+
+```lua
+vim.pack.add({
+    "https://github.com/rachartier/tiny-cmdline.nvim",
+    config = function()
+        vim.o.cmdheight = 0
+        require("tiny-cmdline").setup()
+    end,
+})
+```
+
 ### lazy.nvim
+
+Minimal:
 
 ```lua
 {
     "rachartier/tiny-cmdline.nvim",
-    event = "VeryLazy",
+    init = function()
+        vim.o.cmdheight = 0
+    end,
+}
+```
+
+With `vim.g`:
+
+```lua
+{
+    "rachartier/tiny-cmdline.nvim",
+    init = function()
+        vim.o.cmdheight = 0
+        vim.g.tiny_cmdline = {
+            width = { value = "70%" },
+        }
+    end,
+}
+```
+
+With `setup()`:
+
+```lua
+{
+    "rachartier/tiny-cmdline.nvim",
     config = function()
         vim.o.cmdheight = 0
         require("tiny-cmdline").setup()
     end,
 }
-```
-
-### vim.pack (Neovim built-in, >= 0.12)
-
-```lua
-vim.o.cmdheight = 0
-vim.pack.add({ "https://github.com/rachartier/tiny-cmdline.nvim" })
-require("tiny-cmdline").setup()
 ```
 
 ## Configuration
@@ -120,7 +177,7 @@ require("tiny-cmdline").setup({
 
 ## Troubleshooting
 
-- **Cmdline stays at the bottom**: Ensure `vim.o.cmdheight = 0` is set before `setup()`.
+- **Cmdline stays at the bottom**: Ensure `vim.o.cmdheight = 0` is set before the plugin initializes (use `init` in lazy.nvim, or set it early in your config).
 - **Completion menu misaligned**: Tune `menu_col_offset` to match your border/padding.
 - **Border doesn't match the rest of Neovim**: Leave `border = nil` to inherit `vim.o.winborder`.
 - **Search feels different**: `/` and `?` are in `native_types` by default and rendered at the bottom; remove them from that list to also center them.
