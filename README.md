@@ -25,6 +25,10 @@ A Neovim plugin that repositions the cmdline as a centered floating window, powe
 
 - Neovim >= 0.12
 - `cmdheight=0` (better to have for `ui2`)
+- `ui2` must be enabled explicitly:
+  ```lua
+  require("vim._core.ui2").enable({ enable = true })
+  ```
 
 ## Installation
 
