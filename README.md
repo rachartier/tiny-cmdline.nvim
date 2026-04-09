@@ -55,19 +55,23 @@ require("tiny-cmdline").setup()
 
 ```lua
 require("tiny-cmdline").setup({
-    -- Fraction of editor columns used for the cmdline window width (0–1)
-    width = 0.6,
+    -- Cmdline window width
+    width = {
+        fraction = 0.6,  -- fraction of editor columns (0–1)
+        min = 40,        -- minimum width in columns
+        max = 80,        -- maximum width in columns
+    },
+
+    -- Window position as fractions (0 = left/top, 0.5 = center, 1 = right/bottom)
+    position = {
+        x = 0.5,
+        y = 0.5,
+    },
 
     -- Border style for the floating window
     -- nil inherits vim.o.winborder at setup() time, falling back to "rounded"
     -- Set to "none" to disable the border
     border = nil,
-
-    -- Minimum width in columns
-    min_width = 40,
-
-    -- Maximum width in columns
-    max_width = 80,
 
     -- Horizontal offset of the completion menu anchor from the window's left inner edge
     -- Used to align blink.cmp / nvim-cmp menus with the cmdline window

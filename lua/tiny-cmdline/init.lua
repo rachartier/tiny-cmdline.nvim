@@ -11,19 +11,33 @@ M.adapters = {
   end,
 }
 
+---@class TinyCmdlineWidthConfig
+---@field fraction number Fraction of editor columns (0–1)
+---@field min integer Minimum width in columns
+---@field max integer Maximum width in columns
+
+---@class TinyCmdlinePositionConfig
+---@field x number Horizontal position as a fraction (0 = left, 0.5 = center, 1 = right)
+---@field y number Vertical position as a fraction (0 = top, 0.5 = center, 1 = bottom)
+
 ---@class TinyCmdlineConfig
----@field width number Fraction of editor columns (0–1)
+---@field width TinyCmdlineWidthConfig
+---@field position TinyCmdlinePositionConfig
 ---@field border string|nil nil = inherit vim.o.winborder at setup() time
----@field min_width integer
----@field max_width integer
 ---@field menu_col_offset integer Completion menu offset from the window's left inner edge
 ---@field native_types string[] Types shown at the bottom instead of centered (e.g. "/", "?")
 ---@field on_reposition fun()|nil Called after every reposition
 M.config = {
-  width = 0.6,
+  width = {
+    fraction = 0.6,
+    min = 40,
+    max = 80,
+  },
+  position = {
+    x = 0.5,
+    y = 0.5,
+  },
   border = nil,
-  min_width = 40,
-  max_width = 80,
   menu_col_offset = 3,
   native_types = { "/", "?" },
   on_reposition = nil,
@@ -34,12 +48,14 @@ M.config = {
 local function geometry(content_height)
   local cols, lines = vim.o.columns, vim.o.lines
   local b = M.config.border == "none" and 0 or 1
-  local width =
-    math.max(M.config.min_width, math.min(M.config.max_width, math.floor(cols * M.config.width)))
+  local width = math.max(
+    M.config.width.min,
+    math.min(M.config.width.max, math.floor(cols * M.config.width.fraction))
+  )
   width = math.min(width, cols - 4)
 
-  local row = math.max(0, math.floor((lines - content_height - b * 2) / 2))
-  local col = math.max(0, math.floor((cols - width - b * 2) / 2))
+  local row = math.max(0, math.floor((lines - content_height - b * 2) * M.config.position.y))
+  local col = math.max(0, math.floor((cols - width - b * 2) * M.config.position.x))
   return width, row, col, b
 end
 
