@@ -75,7 +75,7 @@ local cmd_win_saved = nil ---@type table|nil
 local ui2 = nil ---@type table|nil
 
 local function set_cmdheight_0()
-  vim._with({ noautocmd = true }, function()
+  vim._with({ noautocmd = true, o = { splitkeep = "screen" } }, function()
     vim.o.cmdheight = 0
   end)
 end
@@ -101,16 +101,17 @@ local function reposition()
     return
   end
 
-  -- saved once and restored on CmdlineLeave so post-command messages render at the bottom
+  local current = vim.api.nvim_win_get_config(win)
+
+  -- saved once per session and restored on CmdlineLeave so post-command messages render at the bottom
   if not cmd_win_saved then
-    local cfg = vim.api.nvim_win_get_config(win)
     cmd_win_saved = {
-      relative = cfg.relative,
-      anchor = cfg.anchor,
-      col = cfg.col,
-      row = cfg.row,
-      width = cfg.width,
-      border = cfg.border,
+      relative = current.relative,
+      anchor = current.anchor,
+      col = current.col,
+      row = current.row,
+      width = current.width,
+      border = current.border,
     }
     vim.wo[win].winhighlight = "Normal:TinyCmdlineNormal,FloatBorder:TinyCmdlineBorder"
   end
@@ -118,30 +119,41 @@ local function reposition()
   local content_height = math.max(1, vim.api.nvim_win_get_height(win))
 
   if vim.tbl_contains(M.config.native_types, cmdline_type) then
-    pcall(vim.api.nvim_win_set_config, win, {
-      relative = "editor",
-      row = math.max(0, vim.o.lines - content_height),
-      col = 0,
-      width = vim.o.columns,
-      border = "none",
-    })
+    local target_row = math.max(0, vim.o.lines - content_height)
+    if
+      current.relative ~= "editor"
+      or current.row ~= target_row
+      or current.col ~= 0
+      or current.width ~= vim.o.columns
+    then
+      pcall(vim.api.nvim_win_set_config, win, {
+        relative = "editor",
+        row = target_row,
+        col = 0,
+        width = vim.o.columns,
+        border = "none",
+      })
+    end
     vim.g.ui_cmdline_pos = original_ui_cmdline_pos
     return
   end
 
   local width, row, col, b = geometry(content_height)
-  pcall(vim.api.nvim_win_set_config, win, {
-    relative = "editor",
-    row = row,
-    col = col,
-    width = width,
-    border = M.config.border,
-  })
-  vim.g.ui_cmdline_pos = { row + content_height + b * 2, col + b + M.config.menu_col_offset } -- blink.cmp / nvim-cmp anchor
-
-  if M.config.on_reposition then
-    M.config.on_reposition()
+  if
+    current.relative ~= "editor"
+    or current.row ~= row
+    or current.col ~= col
+    or current.width ~= width
+  then
+    pcall(vim.api.nvim_win_set_config, win, {
+      relative = "editor",
+      row = row,
+      col = col,
+      width = width,
+      border = M.config.border,
+    })
   end
+  vim.g.ui_cmdline_pos = { row + content_height + b * 2, col + b + M.config.menu_col_offset } -- blink.cmp / nvim-cmp anchor
 end
 
 local wrapped = false
@@ -155,17 +167,16 @@ local function wrap_cmdline_show()
   end
   local orig = cmdline.cmdline_show
   cmdline.cmdline_show = function(...)
-    if not cmdline_type or vim.tbl_contains(M.config.native_types, cmdline_type) then
-      local r = orig(...)
-      reposition()
+    local r = orig(...)
+    if not cmdline_type then
       return r
     end
 
-    -- restore scroll after the brief cmdheight 0→1→0 to avoid a 1-line jump with scrolloff.
-    local view = vim.fn.winsaveview()
-    local r = orig(...)
-    set_cmdheight_0()
-    vim.fn.winrestview(view)
+    -- search types need cmdheight=1 for stable IncSearch rendering
+    local is_search = cmdline_type == "/" or cmdline_type == "?"
+    if not is_search and not vim.tbl_contains(M.config.native_types, cmdline_type) then
+      set_cmdheight_0()
+    end
     reposition()
     return r
   end
@@ -212,20 +223,18 @@ function M.setup(opts)
   vim.api.nvim_create_autocmd("CmdlineLeave", {
     group = group,
     callback = function()
-      local was_native = vim.tbl_contains(M.config.native_types, cmdline_type)
       cmdline_type = nil
       vim.g.ui_cmdline_pos = original_ui_cmdline_pos
 
-      -- restore original position without hiding so ui2 can display post-command messages
       local win = get_cmd_win()
       if win and cmd_win_saved then
+        -- restore original position so post-command messages render at the bottom
         pcall(vim.api.nvim_win_set_config, win, cmd_win_saved)
+        cmd_win_saved = nil
       end
 
-      if was_native then
-        -- defer so ui2's OptionSet doesn't re-bump cmdheight to 1 after a search
-        vim.schedule(set_cmdheight_0)
-      end
+      -- defer so ui2's OptionSet doesn't re-bump cmdheight after leaving search/native types
+      vim.schedule(set_cmdheight_0)
     end,
   })
 
@@ -240,7 +249,12 @@ function M.setup(opts)
   vim.api.nvim_create_autocmd({ "VimResized", "TabEnter" }, {
     group = group,
     callback = function()
-      vim.schedule(reposition)
+      vim.schedule(function()
+        reposition()
+        if M.config.on_reposition then
+          M.config.on_reposition()
+        end
+      end)
     end,
   })
 
