@@ -155,16 +155,17 @@ local function wrap_cmdline_show()
   end
   local orig = cmdline.cmdline_show
   cmdline.cmdline_show = function(...)
-    local r = orig(...)
-    if not cmdline_type then
+    if not cmdline_type or vim.tbl_contains(M.config.native_types, cmdline_type) then
+      local r = orig(...)
+      reposition()
       return r
     end
 
-    -- ui2 sets cmdheight=1 on every show; suppress it for non-native types
-    -- noautocmd prevents ui2's OptionSet handler from re-applying it
-    if not vim.tbl_contains(M.config.native_types, cmdline_type) then
-      set_cmdheight_0()
-    end
+    -- restore scroll after the brief cmdheight 0→1→0 to avoid a 1-line jump with scrolloff.
+    local view = vim.fn.winsaveview()
+    local r = orig(...)
+    set_cmdheight_0()
+    vim.fn.winrestview(view)
     reposition()
     return r
   end
