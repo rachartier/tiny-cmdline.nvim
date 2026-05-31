@@ -22,12 +22,23 @@ M.adapters = {
 ---@field x string|integer Horizontal position: "50%" = center, integer = absolute columns from left
 ---@field y string|integer Vertical position: "50%" = center, integer = absolute rows from top
 
+---@class TinyCmdlineTitleFormat
+---@field type string|string[]|nil getcmdtype() value(s) to match; nil = any
+---@field pattern string|string[]|nil Lua pattern(s) matched against getcmdline(); nil = always
+---@field title string Title text to display (include leading/trailing spaces as desired)
+
+---@class TinyCmdlineTitleConfig
+---@field enabled boolean
+---@field pos "left"|"center"|"right"
+---@field formats TinyCmdlineTitleFormat[] Evaluated in order; first match wins
+
 ---@class TinyCmdlineConfig
 ---@field width TinyCmdlineWidthConfig
 ---@field position TinyCmdlinePositionConfig
 ---@field border string|nil nil = inherit vim.o.winborder at setup() time
 ---@field menu_col_offset integer Completion menu offset from the window's left inner edge
 ---@field native_types string[] Types shown at the bottom instead of centered (e.g. "/", "?")
+---@field title TinyCmdlineTitleConfig
 ---@field on_reposition fun()|nil Called after every reposition
 M.config = {
   width = {
@@ -42,6 +53,22 @@ M.config = {
   border = nil,
   menu_col_offset = 3,
   native_types = { "/", "?" },
+  title = {
+    enabled = false,
+    pos = "center",
+    -- evaluated in order; first match wins. Last entry is the fallback.
+    formats = {
+      { type = ":", pattern = { "^%s*lua%s+", "^%s*lua%s*=", "^%s*=" }, title = " Lua " },
+      { type = ":", pattern = "^%s*!",          title = " Shell " },
+      { type = ":", pattern = "^%s*he?l?p?%s+", title = " Help " },
+      { type = "/",                             title = " Search " },
+      { type = "?",                             title = " Search " },
+      { type = "=",                             title = " Expression " },
+      { type = "@",                             title = " Input " },
+      { type = ">",                             title = " Debug " },
+      {                                         title = " CmdLine " },
+    },
+  },
   on_reposition = nil,
 }
 
@@ -73,6 +100,43 @@ local cmdline_type = nil ---@type string|nil
 local original_ui_cmdline_pos = nil ---@type table|nil
 local cmd_win_saved = nil ---@type table|nil
 local ui2 = nil ---@type table|nil
+local applied_title = nil ---@type string|nil
+
+local function type_matches(filter, t)
+  if filter == nil then
+    return true
+  end
+  if type(filter) == "string" then
+    return filter == t
+  end
+  return vim.tbl_contains(filter, t)
+end
+
+---@return string|nil
+local function compute_title()
+  local cfg = M.config.title
+  if not cfg or not cfg.enabled or not cmdline_type then
+    return nil
+  end
+  local cmdline = vim.fn.getcmdline() or ""
+  for _, fmt in ipairs(cfg.formats or {}) do
+    if type_matches(fmt.type, cmdline_type) then
+      local patterns = fmt.pattern
+      if patterns == nil then
+        return fmt.title
+      end
+      if type(patterns) == "string" then
+        patterns = { patterns }
+      end
+      for _, p in ipairs(patterns) do
+        if cmdline:match(p) then
+          return fmt.title
+        end
+      end
+    end
+  end
+  return nil
+end
 
 local function set_cmdheight_0()
   vim._with({ noautocmd = true, o = { splitkeep = "screen" } }, function()
@@ -113,7 +177,7 @@ local function reposition()
       width = current.width,
       border = current.border,
     }
-    vim.wo[win].winhighlight = "Normal:TinyCmdlineNormal,FloatBorder:TinyCmdlineBorder"
+    vim.wo[win].winhighlight = "Normal:TinyCmdlineNormal,FloatBorder:TinyCmdlineBorder,FloatTitle:TinyCmdlineTitle"
   end
 
   local content_height = math.max(1, vim.api.nvim_win_get_height(win))
@@ -139,19 +203,28 @@ local function reposition()
   end
 
   local width, row, col, b = geometry(content_height)
+  local title = compute_title()
+  local borderless = M.config.border == "none" or M.config.border == nil
   if
     current.relative ~= "editor"
     or current.row ~= row
     or current.col ~= col
     or current.width ~= width
+    or applied_title ~= title
   then
-    pcall(vim.api.nvim_win_set_config, win, {
+    local cfg = {
       relative = "editor",
       row = row,
       col = col,
       width = width,
       border = M.config.border,
-    })
+    }
+    if title and title ~= "" and not borderless then
+      cfg.title = title
+      cfg.title_pos = M.config.title and M.config.title.pos or "left"
+    end
+    pcall(vim.api.nvim_win_set_config, win, cfg)
+    applied_title = title
   end
   vim.g.ui_cmdline_pos = { row + content_height + b * 2, col + b + M.config.menu_col_offset } -- blink.cmp / nvim-cmp anchor
 end
@@ -202,6 +275,7 @@ function M.setup(opts)
 
   vim.api.nvim_set_hl(0, "TinyCmdlineNormal", { link = "MsgArea", default = true })
   vim.api.nvim_set_hl(0, "TinyCmdlineBorder", { link = "FloatBorder", default = true })
+  vim.api.nvim_set_hl(0, "TinyCmdlineTitle", { link = "FloatTitle", default = true })
 
   original_ui_cmdline_pos = vim.g.ui_cmdline_pos
   cmd_win_saved = nil
@@ -224,6 +298,7 @@ function M.setup(opts)
     group = group,
     callback = function()
       cmdline_type = nil
+      applied_title = nil
       vim.g.ui_cmdline_pos = original_ui_cmdline_pos
 
       local win = get_cmd_win()

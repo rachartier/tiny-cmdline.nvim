@@ -143,6 +143,14 @@ require("tiny-cmdline").setup({
     -- "/" and "?" (search) are kept native by default
     native_types = { "/", "?" },
 
+    -- Dynamic popup title (rendered on the floating border)
+    -- Disabled by default; set enabled = true to opt in
+    -- Has no effect when border = "none" or when the cmdline is rendered via native_types
+    title = {
+        enabled = false,
+        pos = "center",  -- "left" | "center" | "right"
+    },
+
     -- Optional callback invoked after every reposition
     on_reposition = nil,
 })
@@ -156,6 +164,7 @@ require("tiny-cmdline").setup({
 | --- | --- | --- |
 | `TinyCmdlineNormal` | `MsgArea` | Background of the cmdline window |
 | `TinyCmdlineBorder` | `FloatBorder` | Border of the cmdline window |
+| `TinyCmdlineTitle` | `FloatTitle` | Title shown on the border |
 
 Override them in your colorscheme or config:
 
