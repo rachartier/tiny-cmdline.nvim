@@ -89,7 +89,7 @@ local function geometry(content_height)
     M.config.width.min,
     math.min(M.config.width.max, parse_dimension(M.config.width.value, cols))
   )
-  width = math.min(width, cols - 4)
+  width = math.min(width, cols - b * 2)
 
   local row = math.max(0, parse_dimension(M.config.position.y, lines - content_height - b * 2))
   local col = math.max(0, parse_dimension(M.config.position.x, cols - width - b * 2))
