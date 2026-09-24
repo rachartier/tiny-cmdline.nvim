@@ -33,13 +33,13 @@ M.adapters = {
 ---@field formats TinyCmdlineTitleFormat[] Evaluated in order; first match wins
 
 ---@class TinyCmdlineConfig
----@field width TinyCmdlineWidthConfig
----@field position TinyCmdlinePositionConfig
----@field border string|nil nil = inherit vim.o.winborder at setup() time
----@field menu_col_offset integer Completion menu offset from the window's left inner edge
----@field native_types string[] Types shown at the bottom instead of centered (e.g. "/", "?")
----@field title TinyCmdlineTitleConfig
----@field on_reposition fun()|nil Called after every reposition
+---@field width? TinyCmdlineWidthConfig
+---@field position? TinyCmdlinePositionConfig
+---@field border? string nil = inherit vim.o.winborder at setup() time
+---@field menu_col_offset? integer Completion menu offset from the window's left inner edge
+---@field native_types? string[] Types shown at the bottom instead of centered (e.g. "/", "?")
+---@field title? TinyCmdlineTitleConfig
+---@field on_reposition? fun() Called after every reposition
 M.config = {
   width = {
     value = "60%",
@@ -59,14 +59,14 @@ M.config = {
     -- evaluated in order; first match wins. Last entry is the fallback.
     formats = {
       { type = ":", pattern = { "^%s*lua%s+", "^%s*lua%s*=", "^%s*=" }, title = " Lua " },
-      { type = ":", pattern = "^%s*!",          title = " Shell " },
+      { type = ":", pattern = "^%s*!", title = " Shell " },
       { type = ":", pattern = "^%s*he?l?p?%s+", title = " Help " },
-      { type = "/",                             title = " Search " },
-      { type = "?",                             title = " Search " },
-      { type = "=",                             title = " Expression " },
-      { type = "@",                             title = " Input " },
-      { type = ">",                             title = " Debug " },
-      {                                         title = " CmdLine " },
+      { type = "/", title = " Search " },
+      { type = "?", title = " Search " },
+      { type = "=", title = " Expression " },
+      { type = "@", title = " Input " },
+      { type = ">", title = " Debug " },
+      { title = " CmdLine " },
     },
   },
   on_reposition = nil,
@@ -96,14 +96,14 @@ local function geometry(content_height)
   return width, row, col, b
 end
 
-local cmdline_type = nil ---@type string|nil
-local original_ui_cmdline_pos = nil ---@type table|nil
-local cmd_win_saved = nil ---@type table|nil
-local ui2 = nil ---@type table|nil
-local applied_title = nil ---@type string|nil
+local cmdline_type = nil ---@type string?
+local original_ui_cmdline_pos = nil ---@type table?
+local cmd_win_saved = nil ---@type table?
+local ui2 = nil ---@type table?
+local applied_title = nil ---@type string?
 
 local function type_matches(filter, t)
-  if filter == nil then
+  if not filter then
     return true
   end
   if type(filter) == "string" then
@@ -112,17 +112,17 @@ local function type_matches(filter, t)
   return vim.tbl_contains(filter, t)
 end
 
----@return string|nil
+---@return string?
 local function compute_title()
   local cfg = M.config.title
   if not cfg or not cfg.enabled or not cmdline_type then
-    return nil
+    return
   end
   local cmdline = vim.fn.getcmdline() or ""
   for _, fmt in ipairs(cfg.formats or {}) do
     if type_matches(fmt.type, cmdline_type) then
       local patterns = fmt.pattern
-      if patterns == nil then
+      if not patterns then
         return fmt.title
       end
       if type(patterns) == "string" then
@@ -135,7 +135,7 @@ local function compute_title()
       end
     end
   end
-  return nil
+  return
 end
 
 local function set_cmdheight_0()
@@ -148,7 +148,7 @@ local function get_cmd_win()
   if not ui2 then
     local ok, mod = pcall(require, "vim._core.ui2")
     if not ok then
-      return nil
+      return
     end
     ui2 = mod
   end
@@ -177,7 +177,8 @@ local function reposition()
       width = current.width,
       border = current.border,
     }
-    vim.wo[win].winhighlight = "Normal:TinyCmdlineNormal,FloatBorder:TinyCmdlineBorder,FloatTitle:TinyCmdlineTitle"
+    vim.wo[win].winhighlight =
+      "Normal:TinyCmdlineNormal,FloatBorder:TinyCmdlineBorder,FloatTitle:TinyCmdlineTitle"
   end
 
   local content_height = math.max(1, vim.api.nvim_win_get_height(win))
@@ -337,3 +338,5 @@ function M.setup(opts)
 end
 
 return M
+
+-- vim: ts=2
