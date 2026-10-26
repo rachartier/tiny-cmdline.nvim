@@ -43,6 +43,10 @@ end
 ---@field x string|integer Horizontal position: "50%" = center, integer = absolute columns from left
 ---@field y string|integer Vertical position: "50%" = center, integer = absolute rows from top
 
+---@class TinyCmdlinePositionOverride
+---@field x string|integer|nil
+---@field y string|integer|nil
+
 ---@class TinyCmdlineTitleFormat
 ---@field type string|string[]|nil getcmdtype() value(s) to match; nil = any
 ---@field pattern string|string[]|nil Lua pattern(s) matched against getcmdline(); nil = always
@@ -56,6 +60,7 @@ end
 ---@class TinyCmdlineConfig
 ---@field width TinyCmdlineWidthConfig
 ---@field position TinyCmdlinePositionConfig
+---@field position_presets TinyCmdlinePositionConfig[]
 ---@field border string|nil nil = inherit vim.o.winborder at setup() time
 ---@field menu_col_offset integer Completion menu offset from the window's left inner edge
 ---@field native_types string[] Types shown at the bottom instead of centered (e.g. "/", "?")
@@ -70,6 +75,16 @@ M.config = {
   position = {
     x = "50%",
     y = "50%",
+  },
+  position_presets = {
+    {
+      x = "50%",
+      y = "80%",
+    },
+    {
+      x = "50%",
+      y = "20%",
+    },
   },
   border = nil,
   menu_col_offset = 3,
@@ -93,6 +108,27 @@ M.config = {
   on_reposition = nil,
 }
 
+---Desired position of the tiny cmdline.
+---
+---This preset stays active during a Neovim session.
+---
+---If 0, Tiny Cmdline uses M.config.position.
+---Otherwise it is the index of M.config.position_presets.
+---
+---@type integer
+local active_position_preset = 0
+
+---Returns active position pointed to by active_position_preset.
+---
+---@return TinyCmdlinePositionConfig
+local function get_active_position()
+  if active_position_preset == 0 then
+    return M.config.position
+  else
+    return M.config.position_presets[active_position_preset]
+  end
+end
+
 -- "60%" -> fraction of available; integer -> absolute
 local function parse_dimension(value, available)
   if type(value) == "string" then
@@ -112,8 +148,9 @@ local function geometry(content_height)
   )
   width = math.min(width, cols - b * 2)
 
-  local row = math.max(0, parse_dimension(M.config.position.y, lines - content_height - b * 2))
-  local col = math.max(0, parse_dimension(M.config.position.x, cols - width - b * 2))
+  local active_position = get_active_position()
+  local row = math.max(0, parse_dimension(active_position.y, lines - content_height - b * 2))
+  local col = math.max(0, parse_dimension(active_position.x, cols - width - b * 2))
   return width, row, col, b
 end
 
@@ -358,6 +395,17 @@ local function wrap_and_reposition()
   reposition()
 end
 
+---Shifts the active position preset cyclically.
+---
+---@param shift integer
+local function shift_active_position_preset(shift)
+  active_position_preset = active_position_preset + shift
+  active_position_preset = active_position_preset % (#M.config.position_presets + 1)
+  reposition()
+  -- Reposition by itself does not trigger a redraw. We need to force it.
+  vim.cmd.redraw()
+end
+
 ---@param opts TinyCmdlineConfig?
 function M.setup(opts)
   if M._initialized then
@@ -410,6 +458,13 @@ function M.setup(opts)
       vim.schedule(fix_pum)
     end,
   })
+
+  vim.keymap.set("c", "<Plug>(tiny-cmdline-prev-position-preset)", function()
+    shift_active_position_preset(-1)
+  end, { desc = "Previous tiny cmdline position", silent = true })
+  vim.keymap.set("c", "<Plug>(tiny-cmdline-next-position-preset)", function()
+    shift_active_position_preset(1)
+  end, { desc = "Next tiny cmdline position", silent = true })
 
   vim.schedule(wrap_and_reposition)
 end

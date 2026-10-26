@@ -12,6 +12,7 @@ A Neovim plugin that repositions the cmdline as a centered floating window, powe
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Configuration](#configuration)
+- [Keymaps](#keymaps)
 - [Highlight Groups](#highlight-groups)
 - [Events](#events)
 - [How It Works](#how-it-works)
@@ -131,6 +132,13 @@ require("tiny-cmdline").setup({
         y = "50%",  -- vertical:   "0%" = top,  "50%" = center, "100%" = bottom
     },
 
+    -- Alternative positions to cycle through with the position preset keymaps
+    -- (see Keymaps). Same format as `position`.
+    position_presets = {
+        { x = "50%", y = "80%" },
+        { x = "50%", y = "20%" },
+    },
+
     -- Border style for the floating window
     -- nil inherits vim.o.winborder at setup() time, falling back to "rounded"
     -- Set to "none" to disable the border
@@ -158,6 +166,22 @@ require("tiny-cmdline").setup({
 ```
 
 </details>
+
+## Keymaps
+
+The plugin defines `<Plug>` mappings in cmdline mode but binds no keys by default:
+
+| Mapping | Description |
+| --- | --- |
+| `<Plug>(tiny-cmdline-next-position-preset)` | Move the cmdline window to the next position preset |
+| `<Plug>(tiny-cmdline-prev-position-preset)` | Move the cmdline window to the previous position preset |
+
+Presets cycle through `position` followed by each entry of `position_presets`, wrapping around at both ends. Useful when the window covers the text you want to see while typing a command.
+
+```lua
+vim.keymap.set("c", "<A-,>", "<Plug>(tiny-cmdline-prev-position-preset)")
+vim.keymap.set("c", "<A-.>", "<Plug>(tiny-cmdline-next-position-preset)")
+```
 
 ## Highlight Groups
 
